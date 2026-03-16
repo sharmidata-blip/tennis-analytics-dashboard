@@ -1,4 +1,7 @@
-numpy
+streamlit
 pandas
-psycopg2
+numpy
+plotly
 sqlalchemy
+psycopg2-binary
+requests
