@@ -5,19 +5,48 @@ import json
 
 st.set_page_config(page_title="Tennis Pro Dashboard", layout="wide")
 
-# ---------------- STYLE ----------------
+# ---------------- STYLE FIX (FINAL UI 🔥) ----------------
 st.markdown("""
 <style>
+
+/* App background */
 .stApp {
     background-color: #0E1117;
     color: white;
 }
+
+/* Sidebar */
 [data-testid="stSidebar"] {
     background-color: #1c1f26;
+    color: white;
 }
-h1, h2, h3, h4 {
-    color: #6C63FF;
+
+/* Text */
+h1, h2, h3, h4, h5, h6, p, label, span {
+    color: white !important;
 }
+
+/* KPI values */
+[data-testid="stMetricValue"] {
+    color: white !important;
+    font-size: 28px !important;
+}
+
+/* KPI labels */
+[data-testid="stMetricLabel"] {
+    color: #aaaaaa !important;
+}
+
+/* Dropdown text */
+.stSelectbox div {
+    color: black !important;
+}
+
+/* Plotly background */
+.js-plotly-plot .plotly, .js-plotly-plot .plotly div {
+    background-color: #0E1117 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -25,7 +54,7 @@ h1, h2, h3, h4 {
 st.markdown("<h1 style='text-align:center;'>🎾 Tennis Pro Analytics Dashboard</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align:center;color:gray;'>Player Rankings | Country Insights | Performance Trends</h4>", unsafe_allow_html=True)
 
-# ---------------- LOAD JSON (FINAL FIX 🔥) ----------------
+# ---------------- LOAD DATA ----------------
 with open("double_competitors_rankings.json") as f:
     data = json.load(f)
 
@@ -97,6 +126,13 @@ fig_top = px.bar(
     color="points",
     color_continuous_scale="viridis"
 )
+
+fig_top.update_layout(
+    plot_bgcolor="#0E1117",
+    paper_bgcolor="#0E1117",
+    font_color="white"
+)
+
 st.plotly_chart(fig_top, use_container_width=True)
 
 # ---------------- BOTTOM PLAYERS ----------------
@@ -111,6 +147,13 @@ fig_bottom = px.bar(
     color="points",
     color_continuous_scale="reds"
 )
+
+fig_bottom.update_layout(
+    plot_bgcolor="#0E1117",
+    paper_bgcolor="#0E1117",
+    font_color="white"
+)
+
 st.plotly_chart(fig_bottom, use_container_width=True)
 
 st.markdown("---")
@@ -128,6 +171,13 @@ fig_country = px.bar(
     color="players",
     color_continuous_scale="plasma"
 )
+
+fig_country.update_layout(
+    plot_bgcolor="#0E1117",
+    paper_bgcolor="#0E1117",
+    font_color="white"
+)
+
 st.plotly_chart(fig_country, use_container_width=True)
 
 st.markdown("---")
@@ -144,18 +194,14 @@ fig_scatter = px.scatter(
     hover_name="name",
     color_continuous_scale="viridis"
 )
-st.plotly_chart(fig_scatter, use_container_width=True)
 
-st.markdown("---")
-
-# ---------------- BOX ----------------
-fig_box = px.box(
-    df,
-    x="country",
-    y="rank",
-    color="country"
+fig_scatter.update_layout(
+    plot_bgcolor="#0E1117",
+    paper_bgcolor="#0E1117",
+    font_color="white"
 )
-st.plotly_chart(fig_box, use_container_width=True)
+
+st.plotly_chart(fig_scatter, use_container_width=True)
 
 st.markdown("---")
 
@@ -172,6 +218,13 @@ fig_map = px.choropleth(
     color="players",
     color_continuous_scale="blues"
 )
+
+fig_map.update_layout(
+    plot_bgcolor="#0E1117",
+    paper_bgcolor="#0E1117",
+    font_color="white"
+)
+
 st.plotly_chart(fig_map, use_container_width=True)
 
 st.markdown("---")
@@ -187,4 +240,11 @@ fig_trend = px.line(
     y="points",
     markers=True
 )
+
+fig_trend.update_layout(
+    plot_bgcolor="#0E1117",
+    paper_bgcolor="#0E1117",
+    font_color="white"
+)
+
 st.plotly_chart(fig_trend, use_container_width=True)
