@@ -1,3 +1,18 @@
+st.markdown("""
+<style>
+body {
+    background-color: #0E1117;
+    color: white;
+}
+[data-testid="stSidebar"] {
+    background-color: #1c1f26;
+}
+h1, h2, h3, h4 {
+    color: #6C63FF;
+}
+</style>
+""", unsafe_allow_html=True)
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
