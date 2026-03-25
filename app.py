@@ -56,8 +56,7 @@ selected_player = st.sidebar.selectbox("🎾 Player", ["All"] + df["name"].dropn
 search = st.sidebar.text_input("🔍 Search Player")
 
 # ---------------- FILTER ----------------
-df = df[df["rank"] <= rank_limit]
-df = df[df["points"] >= min_points]
+
 # 🔥 AUTO DETECT RANK
 rank_col = [col for col in df.columns if "rank" in col.lower()]
 
