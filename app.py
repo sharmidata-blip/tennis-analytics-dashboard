@@ -14,36 +14,38 @@ df = pd.read_json("double_competitors_rankings.json")
 # Normalize JSON
 df = pd.json_normalize(df)
 
-# 🔥 AUTO FIX COLUMN NAMES (IMPORTANT)
+# Clean column names
 df.columns = [col.lower().replace(".", "_") for col in df.columns]
 
 # ---------------- SAFE COLUMN DETECTION ----------------
 
-# Detect name column
-name_col = None
-for col in df.columns:
-    if "name" in col:
-        name_col = col
-        break
+# NAME
+name_col = next((col for col in df.columns if "name" in col), None)
+if name_col:
+    df = df.rename(columns={name_col: "name"})
+else:
+    df["name"] = "Player"
 
-# Detect country column
-country_col = None
-for col in df.columns:
-    if "country" in col:
-        country_col = col
-        break
+# COUNTRY
+country_col = next((col for col in df.columns if "country" in col), None)
+if country_col:
+    df = df.rename(columns={country_col: "country"})
+else:
+    df["country"] = "Unknown"
 
-# Detect rank and points
-rank_col = "rank" if "rank" in df.columns else None
-points_col = "points" if "points" in df.columns else None
+# RANK
+rank_col = next((col for col in df.columns if "rank" in col), None)
+if rank_col:
+    df = df.rename(columns={rank_col: "rank"})
+else:
+    df["rank"] = range(1, len(df)+1)
 
-# Rename to standard names
-df = df.rename(columns={
-    name_col: "name",
-    country_col: "country",
-    rank_col: "rank",
-    points_col: "points"
-})
+# POINTS
+points_col = next((col for col in df.columns if "point" in col), None)
+if points_col:
+    df = df.rename(columns={points_col: "points"})
+else:
+    df["points"] = 0
 
 # ---------------- SIDEBAR ----------------
 st.sidebar.markdown("## 🎛 Dashboard Controls")
@@ -73,7 +75,7 @@ if selected_player != "All":
     df = df[df["name"] == selected_player]
 
 if search:
-    df = df[df["name"].str.contains(search, case=False)]
+    df = df[df["name"].str.contains(search, case=False, na=False)]
 
 df = df.sort_values("rank")
 
