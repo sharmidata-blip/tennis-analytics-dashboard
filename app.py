@@ -1,3 +1,7 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
 st.markdown("""
 <style>
 body {
@@ -12,11 +16,6 @@ h1, h2, h3, h4 {
 }
 </style>
 """, unsafe_allow_html=True)
-
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-
 st.set_page_config(page_title="Tennis Pro Dashboard", layout="wide")
 
 # ---------------- TITLE ----------------
