@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import json
 
 st.set_page_config(page_title="Tennis Pro Dashboard", layout="wide")
 
@@ -14,7 +15,7 @@ st.markdown("""
 [data-testid="stSidebar"] {
     background-color: #1c1f26;
 }
-h1, h2, h3 {
+h1, h2, h3, h4 {
     color: #6C63FF;
 }
 </style>
@@ -24,55 +25,36 @@ h1, h2, h3 {
 st.markdown("<h1 style='text-align:center;'>🎾 Tennis Pro Analytics Dashboard</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align:center;color:gray;'>Player Rankings | Country Insights | Performance Trends</h4>", unsafe_allow_html=True)
 
-# ---------------- LOAD DATA ----------------
-try:
-    data = pd.read_json("double_competitors_rankings.json")
+# ---------------- LOAD JSON (FINAL FIX 🔥) ----------------
+with open("double_competitors_rankings.json") as f:
+    data = json.load(f)
 
-    # 🔥 HANDLE ALL JSON TYPES
-    if isinstance(data, dict):
-        if "rankings" in data:
-            df = pd.json_normalize(data["rankings"])
-        elif "data" in data and "rankings" in data["data"]:
-            df = pd.json_normalize(data["data"]["rankings"])
-        else:
-            df = pd.json_normalize(data)
-    else:
-        df = pd.json_normalize(data)
+players = data.get("rankings", [])[0].get("competitor_rankings", [])
 
-except:
-    # fallback (so app never breaks)
-    df = pd.DataFrame({
-        "name": ["Djokovic","Alcaraz","Medvedev","Sinner","Nadal"],
-        "country": ["Serbia","Spain","Russia","Italy","Spain"],
-        "rank": [1,2,3,4,5],
-        "points": [11000,9000,8500,8000,7500]
+rows = []
+for p in players:
+    rows.append({
+        "name": p["competitor"]["name"],
+        "country": p["competitor"]["country"],
+        "rank": p["rank"],
+        "points": p["points"]
     })
 
-# ---------------- CLEAN COLUMN NAMES ----------------
-df.columns = [col.lower().replace(".", "_") for col in df.columns]
+df = pd.DataFrame(rows)
 
-# ---------------- AUTO MAP COLUMNS ----------------
-name_col = next((c for c in df.columns if "name" in c), None)
-country_col = next((c for c in df.columns if "country" in c), None)
-rank_col = next((c for c in df.columns if "rank" in c), None)
-points_col = next((c for c in df.columns if "point" in c), None)
-
-df["name"] = df[name_col] if name_col else "Player"
-df["country"] = df[country_col] if country_col else "Unknown"
-
-df["rank"] = pd.to_numeric(df[rank_col], errors="coerce") if rank_col else range(1, len(df)+1)
-df["points"] = pd.to_numeric(df[points_col], errors="coerce") if points_col else 0
-
-df = df.dropna(subset=["rank","points"])
+# ---------------- CLEAN DATA ----------------
+df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
+df["points"] = pd.to_numeric(df["points"], errors="coerce")
+df = df.dropna()
 
 # ---------------- SIDEBAR ----------------
 st.sidebar.markdown("## 🎛 Dashboard Controls")
 
-rank_limit = st.sidebar.slider("Max Rank", 1, 500, 100)
+rank_limit = st.sidebar.slider("Max Rank", 1, 200, 100)
 min_points = st.sidebar.slider("Min Points", 0, 10000, 0)
 
-selected_country = st.sidebar.selectbox("🌍 Country", ["All"] + df["country"].dropna().unique().tolist())
-selected_player = st.sidebar.selectbox("🎾 Player", ["All"] + df["name"].dropna().unique().tolist())
+selected_country = st.sidebar.selectbox("🌍 Country", ["All"] + sorted(df["country"].unique()))
+selected_player = st.sidebar.selectbox("🎾 Player", ["All"] + sorted(df["name"].unique()))
 
 search = st.sidebar.text_input("🔍 Search Player")
 
@@ -87,7 +69,7 @@ if selected_player != "All":
     df = df[df["name"] == selected_player]
 
 if search:
-    df = df[df["name"].str.contains(search, case=False, na=False)]
+    df = df[df["name"].str.contains(search, case=False)]
 
 df = df.sort_values("rank")
 
@@ -117,7 +99,7 @@ fig_top = px.bar(
 )
 st.plotly_chart(fig_top, use_container_width=True)
 
-# ---------------- BOTTOM ----------------
+# ---------------- BOTTOM PLAYERS ----------------
 st.markdown("## 🔻 Bottom 10 Players")
 
 bottom_df = df.tail(10)
@@ -163,6 +145,17 @@ fig_scatter = px.scatter(
     color_continuous_scale="viridis"
 )
 st.plotly_chart(fig_scatter, use_container_width=True)
+
+st.markdown("---")
+
+# ---------------- BOX ----------------
+fig_box = px.box(
+    df,
+    x="country",
+    y="rank",
+    color="country"
+)
+st.plotly_chart(fig_box, use_container_width=True)
 
 st.markdown("---")
 
