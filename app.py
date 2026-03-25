@@ -33,7 +33,11 @@ rank_limit = st.sidebar.slider("Max Rank", 1, 500, 100)
 min_points = st.sidebar.slider("Min Points", 0, 10000, 0)
 
 # Filters
-country_df = df[['country']].drop_duplicates()
+country_df = df[['competitor.country']].drop_duplicates()
+selected_country = st.sidebar.selectbox(
+    "🌍 Country",
+    ["All"] + country_df["competitor.country"].dropna().tolist()
+)
 selected_country = st.sidebar.selectbox("🌍 Country", ["All"] + country_df["country"].dropna().tolist())
 
 player_df = df[['name']].drop_duplicates()
@@ -47,7 +51,7 @@ df = df[df["rank"] <= rank_limit]
 df = df[df["points"] >= min_points]
 
 if selected_country != "All":
-    df = df[df["country"] == selected_country]
+    df = df[df["competitor.country"] == selected_country]
 
 if selected_player != "All":
     df = df[df["name"] == selected_player]
