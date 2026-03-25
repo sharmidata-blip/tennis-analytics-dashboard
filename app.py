@@ -205,6 +205,24 @@ st.plotly_chart(fig_scatter, use_container_width=True)
 
 st.markdown("---")
 
+# ---------------- BOX PLOT ----------------
+st.markdown("## 📊 Rank Distribution by Country")
+
+fig_box = px.box(
+    df,
+    x="country",
+    y="rank",
+    color="country"
+)
+
+fig_box.update_layout(
+    plot_bgcolor="#0E1117",
+    paper_bgcolor="#0E1117",
+    font_color="white"
+)
+
+st.plotly_chart(fig_box, use_container_width=True)
+
 # ---------------- MAP ----------------
 st.markdown("## 🌍 Global Player Distribution")
 
