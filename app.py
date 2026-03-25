@@ -30,7 +30,23 @@ df = pd.json_normalize(df)
 
 # Fix column names
 df.columns = [col.lower().replace(".", "_") for col in df.columns]
+# 🔥 FORCE CORRECT COLUMN MAPPING
+if "competitor_name" in df.columns:
+    df["name"] = df["competitor_name"]
 
+if "competitor_country" in df.columns:
+    df["country"] = df["competitor_country"]
+
+if "rank" not in df.columns:
+    for col in df.columns:
+        if "rank" in col:
+            df["rank"] = df[col]
+
+if "points" not in df.columns:
+    for col in df.columns:
+        if "point" in col:
+            df["points"] = df[col]
+            
 # Rename columns safely
 if "competitor_name" in df.columns:
     df = df.rename(columns={"competitor_name": "name"})
