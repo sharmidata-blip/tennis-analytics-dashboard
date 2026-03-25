@@ -27,20 +27,31 @@ st.markdown("<h4 style='text-align:center;color:gray;'>Player Rankings | Country
 # ---------------- LOAD DATA ----------------
 try:
     data = pd.read_json("double_competitors_rankings.json")
-    df = pd.json_normalize(data["rankings"])
+
+    # 🔥 HANDLE ALL JSON TYPES
+    if isinstance(data, dict):
+        if "rankings" in data:
+            df = pd.json_normalize(data["rankings"])
+        elif "data" in data and "rankings" in data["data"]:
+            df = pd.json_normalize(data["data"]["rankings"])
+        else:
+            df = pd.json_normalize(data)
+    else:
+        df = pd.json_normalize(data)
+
 except:
-    # fallback data (so app never breaks)
+    # fallback (so app never breaks)
     df = pd.DataFrame({
-        "name": ["Player A","Player B","Player C","Player D","Player E"],
-        "country": ["USA","Spain","Serbia","India","France"],
+        "name": ["Djokovic","Alcaraz","Medvedev","Sinner","Nadal"],
+        "country": ["Serbia","Spain","Russia","Italy","Spain"],
         "rank": [1,2,3,4,5],
-        "points": [1000,900,850,800,750]
+        "points": [11000,9000,8500,8000,7500]
     })
 
-# ---------------- FIX COLUMNS ----------------
+# ---------------- CLEAN COLUMN NAMES ----------------
 df.columns = [col.lower().replace(".", "_") for col in df.columns]
 
-# Auto detect columns
+# ---------------- AUTO MAP COLUMNS ----------------
 name_col = next((c for c in df.columns if "name" in c), None)
 country_col = next((c for c in df.columns if "country" in c), None)
 rank_col = next((c for c in df.columns if "rank" in c), None)
@@ -48,6 +59,7 @@ points_col = next((c for c in df.columns if "point" in c), None)
 
 df["name"] = df[name_col] if name_col else "Player"
 df["country"] = df[country_col] if country_col else "Unknown"
+
 df["rank"] = pd.to_numeric(df[rank_col], errors="coerce") if rank_col else range(1, len(df)+1)
 df["points"] = pd.to_numeric(df[points_col], errors="coerce") if points_col else 0
 
@@ -57,7 +69,7 @@ df = df.dropna(subset=["rank","points"])
 st.sidebar.markdown("## 🎛 Dashboard Controls")
 
 rank_limit = st.sidebar.slider("Max Rank", 1, 500, 100)
-min_points = st.sidebar.slider("Min Points", 0, 10000, 0, step=100)
+min_points = st.sidebar.slider("Min Points", 0, 10000, 0)
 
 selected_country = st.sidebar.selectbox("🌍 Country", ["All"] + df["country"].dropna().unique().tolist())
 selected_player = st.sidebar.selectbox("🎾 Player", ["All"] + df["name"].dropna().unique().tolist())
