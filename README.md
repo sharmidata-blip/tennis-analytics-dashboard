@@ -50,13 +50,22 @@ ORDER BY r.rank;
 ![Dashboard](dashboard.png)
 
 ### Player Ranking
-![Ranking](ranking&topplayers.png)
+![Ranking](top10players.png)
+![Ranking](bottom10players.png)
 
-### Player Distribution
-![Players](playerdistribution.png)
+### Rank Distribution
+![Players](rankdistribution.png)
+
+### Country Participation
+![Players](countryparticipation.png)
 
 ### Global Player Distribution
 ![Global](globalplayerdistribution.png)
 
-### Overall Distribution
+### Rank Vs Points Relatiosnhip
+![Players](rankvspoints.png)
+
+### Perforamce Trends
+![Players](performancetrends.png)
 ![Overall](overalldistribution.png)
+
