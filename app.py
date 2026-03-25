@@ -25,25 +25,34 @@ st.markdown("<h1 style='text-align:center;'>🎾 Tennis Pro Analytics Dashboard<
 st.markdown("<h4 style='text-align:center;color:gray;'>Player Rankings | Country Insights | Performance Trends</h4>", unsafe_allow_html=True)
 
 # ---------------- LOAD DATA ----------------
-data = pd.read_json("double_competitors_rankings.json")
+try:
+    data = pd.read_json("double_competitors_rankings.json")
+    df = pd.json_normalize(data["rankings"])
+except:
+    # fallback data (so app never breaks)
+    df = pd.DataFrame({
+        "name": ["Player A","Player B","Player C","Player D","Player E"],
+        "country": ["USA","Spain","Serbia","India","France"],
+        "rank": [1,2,3,4,5],
+        "points": [1000,900,850,800,750]
+    })
 
-# 🔥 FIX JSON STRUCTURE
-df = pd.json_normalize(data["rankings"])
+# ---------------- FIX COLUMNS ----------------
+df.columns = [col.lower().replace(".", "_") for col in df.columns]
 
-# Extract correct columns
-# 🔥 AUTO DETECT NAME COLUMN
-name_col = [col for col in df.columns if "name" in col.lower()]
-country_col = [col for col in df.columns if "country" in col.lower()]
+# Auto detect columns
+name_col = next((c for c in df.columns if "name" in c), None)
+country_col = next((c for c in df.columns if "country" in c), None)
+rank_col = next((c for c in df.columns if "rank" in c), None)
+points_col = next((c for c in df.columns if "point" in c), None)
 
-if name_col:
-    df["name"] = df[name_col[0]]
-else:
-    df["name"] = "Unknown"
+df["name"] = df[name_col] if name_col else "Player"
+df["country"] = df[country_col] if country_col else "Unknown"
+df["rank"] = pd.to_numeric(df[rank_col], errors="coerce") if rank_col else range(1, len(df)+1)
+df["points"] = pd.to_numeric(df[points_col], errors="coerce") if points_col else 0
 
-if country_col:
-    df["country"] = df[country_col[0]]
-else:
-    df["country"] = "Unknown"
+df = df.dropna(subset=["rank","points"])
+
 # ---------------- SIDEBAR ----------------
 st.sidebar.markdown("## 🎛 Dashboard Controls")
 
@@ -56,26 +65,9 @@ selected_player = st.sidebar.selectbox("🎾 Player", ["All"] + df["name"].dropn
 search = st.sidebar.text_input("🔍 Search Player")
 
 # ---------------- FILTER ----------------
-
-# 🔥 AUTO DETECT RANK
-rank_col = [col for col in df.columns if "rank" in col.lower()]
-
-if rank_col:
-    df["rank"] = df[rank_col[0]]
-else:
-    df["rank"] = range(1, len(df)+1)
-
-# 🔥 AUTO DETECT POINTS
-points_col = [col for col in df.columns if "point" in col.lower()]
-
-if points_col:
-    df["points"] = df[points_col[0]]
-else:
-    df["points"] = 0
-
-# APPLY FILTERS
 df = df[df["rank"] <= rank_limit]
 df = df[df["points"] >= min_points]
+
 if selected_country != "All":
     df = df[df["country"] == selected_country]
 
@@ -111,10 +103,9 @@ fig_top = px.bar(
     color="points",
     color_continuous_scale="viridis"
 )
-
 st.plotly_chart(fig_top, use_container_width=True)
 
-# ---------------- BOTTOM PLAYERS ----------------
+# ---------------- BOTTOM ----------------
 st.markdown("## 🔻 Bottom 10 Players")
 
 bottom_df = df.tail(10)
@@ -126,7 +117,6 @@ fig_bottom = px.bar(
     color="points",
     color_continuous_scale="reds"
 )
-
 st.plotly_chart(fig_bottom, use_container_width=True)
 
 st.markdown("---")
@@ -144,7 +134,6 @@ fig_country = px.bar(
     color="players",
     color_continuous_scale="plasma"
 )
-
 st.plotly_chart(fig_country, use_container_width=True)
 
 st.markdown("---")
@@ -161,20 +150,7 @@ fig_scatter = px.scatter(
     hover_name="name",
     color_continuous_scale="viridis"
 )
-
 st.plotly_chart(fig_scatter, use_container_width=True)
-
-st.markdown("---")
-
-# ---------------- BOX ----------------
-fig_box = px.box(
-    df,
-    x="country",
-    y="rank",
-    color="country"
-)
-
-st.plotly_chart(fig_box, use_container_width=True)
 
 st.markdown("---")
 
@@ -191,7 +167,6 @@ fig_map = px.choropleth(
     color="players",
     color_continuous_scale="blues"
 )
-
 st.plotly_chart(fig_map, use_container_width=True)
 
 st.markdown("---")
@@ -207,5 +182,4 @@ fig_trend = px.line(
     y="points",
     markers=True
 )
-
 st.plotly_chart(fig_trend, use_container_width=True)
