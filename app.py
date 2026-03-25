@@ -31,9 +31,19 @@ data = pd.read_json("double_competitors_rankings.json")
 df = pd.json_normalize(data["rankings"])
 
 # Extract correct columns
-df["name"] = df["competitor.name"]
-df["country"] = df["competitor.country"]
+# 🔥 AUTO DETECT NAME COLUMN
+name_col = [col for col in df.columns if "name" in col.lower()]
+country_col = [col for col in df.columns if "country" in col.lower()]
 
+if name_col:
+    df["name"] = df[name_col[0]]
+else:
+    df["name"] = "Unknown"
+
+if country_col:
+    df["country"] = df[country_col[0]]
+else:
+    df["country"] = "Unknown"
 # ---------------- SIDEBAR ----------------
 st.sidebar.markdown("## 🎛 Dashboard Controls")
 
