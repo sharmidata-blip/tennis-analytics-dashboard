@@ -57,7 +57,7 @@ df = df.dropna(subset=["rank","points"])
 st.sidebar.markdown("## 🎛 Dashboard Controls")
 
 rank_limit = st.sidebar.slider("Max Rank", 1, 500, 100)
-min_points = st.sidebar.slider("Min Points", 0, 10000, 0)
+min_points = st.sidebar.slider("Min Points", 0, 10000, 0, step=100)
 
 selected_country = st.sidebar.selectbox("🌍 Country", ["All"] + df["country"].dropna().unique().tolist())
 selected_player = st.sidebar.selectbox("🎾 Player", ["All"] + df["name"].dropna().unique().tolist())
