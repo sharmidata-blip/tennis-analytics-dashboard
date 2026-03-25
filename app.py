@@ -24,16 +24,15 @@ h1, h2, h3 {
 st.markdown("<h1 style='text-align:center;'>🎾 Tennis Pro Analytics Dashboard</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align:center;color:gray;'>Player Rankings | Country Insights | Performance Trends</h4>", unsafe_allow_html=True)
 
-# ---------------- DATA ----------------
-# 🔥 GUARANTEED WORKING SAMPLE DATA (NO ERROR)
-data = {
-    "name": ["Djokovic", "Alcaraz", "Medvedev", "Sinner", "Nadal", "Zverev", "Tsitsipas", "Rublev", "Rune", "Hurkacz"],
-    "country": ["Serbia", "Spain", "Russia", "Italy", "Spain", "Germany", "Greece", "Russia", "Denmark", "Poland"],
-    "rank": [1,2,3,4,5,6,7,8,9,10],
-    "points": [11000, 9000, 8500, 8000, 7500, 7000, 6800, 6500, 6000, 5800]
-}
+# ---------------- LOAD DATA ----------------
+data = pd.read_json("double_competitors_rankings.json")
 
-df = pd.DataFrame(data)
+# 🔥 FIX JSON STRUCTURE
+df = pd.json_normalize(data["rankings"])
+
+# Extract correct columns
+df["name"] = df["competitor.name"]
+df["country"] = df["competitor.country"]
 
 # ---------------- SIDEBAR ----------------
 st.sidebar.markdown("## 🎛 Dashboard Controls")
@@ -41,8 +40,8 @@ st.sidebar.markdown("## 🎛 Dashboard Controls")
 rank_limit = st.sidebar.slider("Max Rank", 1, 500, 100)
 min_points = st.sidebar.slider("Min Points", 0, 10000, 0)
 
-selected_country = st.sidebar.selectbox("🌍 Country", ["All"] + df["country"].unique().tolist())
-selected_player = st.sidebar.selectbox("🎾 Player", ["All"] + df["name"].unique().tolist())
+selected_country = st.sidebar.selectbox("🌍 Country", ["All"] + df["country"].dropna().unique().tolist())
+selected_player = st.sidebar.selectbox("🎾 Player", ["All"] + df["name"].dropna().unique().tolist())
 
 search = st.sidebar.text_input("🔍 Search Player")
 
@@ -57,7 +56,7 @@ if selected_player != "All":
     df = df[df["name"] == selected_player]
 
 if search:
-    df = df[df["name"].str.contains(search, case=False)]
+    df = df[df["name"].str.contains(search, case=False, na=False)]
 
 df = df.sort_values("rank")
 
@@ -68,21 +67,39 @@ col1, col2, col3, col4 = st.columns(4)
 
 col1.metric("🎾 Players", len(df))
 col2.metric("🌍 Countries", df["country"].nunique())
-col3.metric("⭐ Avg Points", int(df["points"].mean()))
-col4.metric("🔥 Max Points", int(df["points"].max()))
+col3.metric("⭐ Avg Points", int(df["points"].mean()) if len(df)>0 else 0)
+col4.metric("🔥 Max Points", int(df["points"].max()) if len(df)>0 else 0)
 
 st.markdown("---")
 
 # ---------------- TOP PLAYERS ----------------
 st.markdown("## 🏆 Top 10 Players")
 
-fig_top = px.bar(df, x="name", y="points", color="points")
+top_df = df.head(10)
+
+fig_top = px.bar(
+    top_df,
+    x="name",
+    y="points",
+    color="points",
+    color_continuous_scale="viridis"
+)
+
 st.plotly_chart(fig_top, use_container_width=True)
 
-# ---------------- BOTTOM ----------------
-st.markdown("## 🔻 Bottom Players")
+# ---------------- BOTTOM PLAYERS ----------------
+st.markdown("## 🔻 Bottom 10 Players")
 
-fig_bottom = px.bar(df.sort_values("points"), x="name", y="points", color="points")
+bottom_df = df.tail(10)
+
+fig_bottom = px.bar(
+    bottom_df,
+    x="name",
+    y="points",
+    color="points",
+    color_continuous_scale="reds"
+)
+
 st.plotly_chart(fig_bottom, use_container_width=True)
 
 st.markdown("---")
@@ -93,7 +110,14 @@ st.markdown("## 🌍 Country Participation")
 country_data = df["country"].value_counts().reset_index()
 country_data.columns = ["country", "players"]
 
-fig_country = px.bar(country_data, x="country", y="players", color="players")
+fig_country = px.bar(
+    country_data,
+    x="country",
+    y="players",
+    color="players",
+    color_continuous_scale="plasma"
+)
+
 st.plotly_chart(fig_country, use_container_width=True)
 
 st.markdown("---")
@@ -101,15 +125,46 @@ st.markdown("---")
 # ---------------- SCATTER ----------------
 st.markdown("## 📊 Rank vs Points Insight")
 
-fig_scatter = px.scatter(df, x="rank", y="points", size="points", color="points", hover_name="name")
+fig_scatter = px.scatter(
+    df,
+    x="rank",
+    y="points",
+    color="points",
+    size="points",
+    hover_name="name",
+    color_continuous_scale="viridis"
+)
+
 st.plotly_chart(fig_scatter, use_container_width=True)
 
 st.markdown("---")
 
-# ---------------- MAP ----------------
-st.markdown("## 🌍 Global Distribution")
+# ---------------- BOX ----------------
+fig_box = px.box(
+    df,
+    x="country",
+    y="rank",
+    color="country"
+)
 
-fig_map = px.choropleth(country_data, locations="country", locationmode="country names", color="players")
+st.plotly_chart(fig_box, use_container_width=True)
+
+st.markdown("---")
+
+# ---------------- MAP ----------------
+st.markdown("## 🌍 Global Player Distribution")
+
+map_df = df["country"].value_counts().reset_index()
+map_df.columns = ["country", "players"]
+
+fig_map = px.choropleth(
+    map_df,
+    locations="country",
+    locationmode="country names",
+    color="players",
+    color_continuous_scale="blues"
+)
+
 st.plotly_chart(fig_map, use_container_width=True)
 
 st.markdown("---")
@@ -117,5 +172,13 @@ st.markdown("---")
 # ---------------- TREND ----------------
 st.markdown("## 📈 Performance Trend")
 
-fig_trend = px.line(df, x="rank", y="points", markers=True)
+trend_df = df.head(30)
+
+fig_trend = px.line(
+    trend_df,
+    x="rank",
+    y="points",
+    markers=True
+)
+
 st.plotly_chart(fig_trend, use_container_width=True)
