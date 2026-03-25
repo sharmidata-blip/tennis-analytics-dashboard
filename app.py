@@ -58,7 +58,25 @@ search = st.sidebar.text_input("🔍 Search Player")
 # ---------------- FILTER ----------------
 df = df[df["rank"] <= rank_limit]
 df = df[df["points"] >= min_points]
+# 🔥 AUTO DETECT RANK
+rank_col = [col for col in df.columns if "rank" in col.lower()]
 
+if rank_col:
+    df["rank"] = df[rank_col[0]]
+else:
+    df["rank"] = range(1, len(df)+1)
+
+# 🔥 AUTO DETECT POINTS
+points_col = [col for col in df.columns if "point" in col.lower()]
+
+if points_col:
+    df["points"] = df[points_col[0]]
+else:
+    df["points"] = 0
+
+# APPLY FILTERS
+df = df[df["rank"] <= rank_limit]
+df = df[df["points"] >= min_points]
 if selected_country != "All":
     df = df[df["country"] == selected_country]
 
